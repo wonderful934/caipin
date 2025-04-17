@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>菜品管理</h1>
+    
+    <input type="file" id="imageUpload">
+    <input type="text" id="dishName" placeholder="菜品名称">
+    <input type="number" id="dishPrice" placeholder="价格">
+    <button onclick="uploadDish()">上传菜品</button>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        const supabase = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY')
+
+        async function uploadDish() {
+            const file = document.getElementById('imageUpload').files[0]
+            const name = document.getElementById('dishName').value
+            const price = parseFloat(document.getElementById('dishPrice').value)
+
+            // 上传图片
+            const { data: imgData, error: imgError } = await supabase.storage
+                .from('dish-images')
+                .upload(`public/${Date.now()}_${file.name}`, file)
+
+            if (imgError) return alert('图片上传失败')
+
+            // 插入菜品数据
+            const { error } = await supabase
+                .from('dishes')
+                .insert([{
+                    name: name,
+                    price: price,
+                    image_url: `${supabase.storageUrl}/object/public/dish-images/${imgData.path}`
+                }])
+
+            if (!error) alert('上传成功！')
+        }
+    </script>
+</body>
+</html>
